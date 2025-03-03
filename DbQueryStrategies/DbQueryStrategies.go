@@ -1,7 +1,7 @@
 package DbQueryStrategies
 
 import (
-	"TODO-LIST/commons"
+	"GOLA/commons"
 	_ "github.com/lib/pq" // Import the pq driver for database/sql
 )
 

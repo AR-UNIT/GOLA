@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Image Gallery - Paginated</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; }
+        h1 { text-align: center; }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-gap: 15px;
+            margin-top: 20px;
+        }
+        .gallery img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .gallery img:hover {
+            transform: scale(1.05);
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<h1>Image Gallery</h1>
+<div class="gallery" id="gallery"></div>
+<div class="pagination" id="pagination">
+    <button id="prevPage">Previous</button>
+    <span id="pageInfo">Page 1</span>
+    <button id="nextPage">Next</button>
+</div>
+
+<script>
+    let currentPage = 1;
+    let totalPages = 1; // Will be updated after fetching images
+    const pageSize = 4; // Number of images per page
+    const gallery = document.getElementById('gallery');
+    const pageInfo = document.getElementById('pageInfo');
+
+    // Function to fetch images from the backend API.
+    async function fetchImages(page, pageSize) {
+        try {
+            const response = await fetch(`/api/images?page=${page}&pageSize=${pageSize}`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch images");
+            }
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching images:", error);
+            return null;
+        }
+    }
+
+    // Render the gallery using the fetched data.
+    async function renderGallery() {
+        const data = await fetchImages(currentPage, pageSize);
+        if (!data) {
+            gallery.innerHTML = "<p>Error loading images</p>";
+            return;
+        }
+        // Update total pages from API response.
+        totalPages = data.totalPages;
+        // Clear current images.
+        gallery.innerHTML = "";
+        // Render each image.
+        data.images.forEach(image => {
+            const img = document.createElement('img');
+            img.src = image.url;
+            img.alt = image.title;
+            img.addEventListener('click', () => {
+                // Navigate to image detail page with the image id in the query string.
+                window.location.href = `image.html?id=${image.id}`;
+            });
+            gallery.appendChild(img);
+        });
+        pageInfo.textContent = `Page ${data.page} of ${totalPages}`;
+    }
+
+    // Event listeners for pagination buttons.
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderGallery();
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderGallery();
+        }
+    });
+
+    // Initial render on page load.
+    renderGallery();
+</script>
+</body>
+</html>

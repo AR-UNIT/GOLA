@@ -1,7 +1,7 @@
 package Deserializers
 
 import (
-	"TODO-LIST/commons"
+	"GOLA/commons"
 	"encoding/json"
 	"log"
 )

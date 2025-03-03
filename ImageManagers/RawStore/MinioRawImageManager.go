@@ -41,7 +41,7 @@ func (m *MinioRawImageStorageManager) Initialize() error {
 
 // UploadImage uploads an image to MinIO.
 func (m *MinioRawImageStorageManager) UploadImage(imageID string, imageData []byte) error {
-	reader := io.NopCloser(io.Reader(bytes.NewReader(imageData)))
+	reader := io.NopCloser(bytes.NewReader(imageData))
 	_, err := m.Client.PutObject(context.Background(), m.BucketName, imageID, reader, int64(len(imageData)), minio.PutObjectOptions{})
 	return err
 }
@@ -49,4 +49,20 @@ func (m *MinioRawImageStorageManager) UploadImage(imageID string, imageData []by
 // DeleteImage removes an image from MinIO.
 func (m *MinioRawImageStorageManager) DeleteImage(imageID string) error {
 	return m.Client.RemoveObject(context.Background(), m.BucketName, imageID, minio.RemoveObjectOptions{})
+}
+
+// FetchImage retrieves an image from MinIO as a byte slice.
+func (m *MinioRawImageStorageManager) FetchImage(imageID string) ([]byte, error) {
+	ctx := context.Background()
+	object, err := m.Client.GetObject(ctx, m.BucketName, imageID, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer object.Close()
+
+	data, err := io.ReadAll(object)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }

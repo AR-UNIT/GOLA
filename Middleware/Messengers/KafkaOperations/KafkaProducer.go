@@ -1,7 +1,7 @@
 package KafkaOperations
 
 import (
-	"TODO-LIST/utils"
+	"GOLA/utils"
 	"context"
 	"encoding/json"
 	"fmt"

@@ -1,7 +1,7 @@
 package Prometheus
 
 import (
-	prometheusMetrics "TODO-LIST/Handlers/metrics" // Import the metrics package where the ResponseWriter is defined
+	prometheusMetrics "GOLA/Handlers/metrics" // Import the metrics package where the ResponseWriter is defined
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"

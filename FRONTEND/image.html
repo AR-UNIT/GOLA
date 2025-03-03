@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Image Detail</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; }
+        .image-container { text-align: center; }
+        .image-container img { max-width: 100%; border-radius: 8px; }
+        .stats { margin-top: 20px; text-align: center; }
+        .comments { margin-top: 30px; }
+        .comment { border-bottom: 1px solid #ccc; padding: 8px 0; }
+        .add-comment { margin-top: 20px; text-align: center; }
+        .add-comment input { padding: 8px; width: 70%; margin-right: 10px; }
+        .add-comment button { padding: 8px 12px; }
+    </style>
+</head>
+<body>
+<div class="image-container">
+    <!-- The image source is set dynamically using the API endpoint -->
+    <img id="detailImage" src="" alt="Image Detail">
+</div>
+<div class="stats" id="stats">
+    <p>Likes: <span id="likesCount">0</span></p>
+    <p>Dislikes: <span id="dislikesCount">0</span></p>
+    <p>Views: <span id="viewsCount">0</span></p>
+</div>
+<div class="comments">
+    <h3>Comments</h3>
+    <div id="commentsList">
+        <!-- Comments will be loaded here -->
+    </div>
+    <div class="add-comment">
+        <input type="text" id="commentInput" placeholder="Add a comment">
+        <button id="submitComment">Submit</button>
+    </div>
+</div>
+
+<script>
+    // Utility function to parse query parameters from the URL.
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    // Get the image ID from the query parameter.
+    const imageId = getQueryParam('id');
+    if (!imageId) {
+        document.body.innerHTML = '<h1>Image not found!</h1>';
+    } else {
+        // Set the image source to use your API endpoint.
+        document.getElementById('detailImage').src = '/images?id=' + imageId;
+
+        // Function to fetch metadata (stats and comments) from your API.
+        function fetchMetadata() {
+            fetch('/images/metadata?id=' + imageId)
+                .then(response => response.json())
+                .then(metadata => {
+                    // Assume metadata is returned as an object with string values for stats.
+                    document.getElementById('likesCount').textContent = metadata.likes || 0;
+                    document.getElementById('dislikesCount').textContent = metadata.dislikes || 0;
+                    document.getElementById('viewsCount').textContent = metadata.views || 0;
+
+                    // Assume comments are returned as a JSON string (e.g., '["Nice!","Awesome"]').
+                    const commentsList = document.getElementById('commentsList');
+                    commentsList.innerHTML = '';
+                    if (metadata.comments) {
+                        try {
+                            const comments = JSON.parse(metadata.comments);
+                            comments.forEach(comment => {
+                                const div = document.createElement('div');
+                                div.className = 'comment';
+                                div.textContent = comment;
+                                commentsList.appendChild(div);
+                            });
+                        } catch(e) {
+                            console.error('Error parsing comments:', e);
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching metadata:', err);
+                });
+        }
+
+        // Initial metadata fetch.
+        fetchMetadata();
+
+        // Handle new comment submission.
+        document.getElementById('submitComment').addEventListener('click', () => {
+            const commentInput = document.getElementById('commentInput');
+            const commentText = commentInput.value.trim();
+            if (commentText !== '') {
+                // Build the JSON payload for the comment event.
+                const payload = {
+                    user_id: "user1",       // Replace with actual user ID if available.
+                    target_id: imageId,
+                    comment: commentText
+                };
+                fetch('/images/comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        console.log('Comment added:', result);
+                        // Option 1: Re-fetch metadata to update stats/comments.
+                        fetchMetadata();
+                        // Option 2: Append the comment directly:
+                        // const commentsList = document.getElementById('commentsList');
+                        // const div = document.createElement('div');
+                        // div.className = 'comment';
+                        // div.textContent = commentText;
+                        // commentsList.appendChild(div);
+                        commentInput.value = '';
+                    })
+                    .catch(err => {
+                        console.error('Error adding comment:', err);
+                    });
+            }
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 package PostgresDb
 
 import (
-	"TODO-LIST/commons"
+	"GOLA/commons"
 )
 
 // CombinedRowLockingEnhancedListStrategy combines both row locking and enhanced listing strategies

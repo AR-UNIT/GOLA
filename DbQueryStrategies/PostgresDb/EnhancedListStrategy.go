@@ -1,7 +1,7 @@
 package PostgresDb
 
 import (
-	"TODO-LIST/commons"
+	"GOLA/commons"
 	"database/sql"
 	"fmt"
 	"strings"

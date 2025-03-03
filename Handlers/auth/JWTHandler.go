@@ -2,8 +2,9 @@ package auth
 
 import (
 	"GOLA/Middleware/Authenticators/jwt"
-	dbTaskManager "GOLA/TaskManagers"
+	dbTaskManager "GOLA/UserEventManagers"
 	"GOLA/commons"
+	"GOLA/commons/db"
 	"GOLA/utils"
 	"database/sql"
 	"encoding/json"
@@ -94,7 +95,7 @@ func Initialize() (*sql.DB, error) {
 	}
 
 	// Define the database configuration
-	config := commons.DBConfig{
+	config := db.DBConfig{
 		Host:     host,
 		Port:     port, // Use the integer value
 		User:     user,

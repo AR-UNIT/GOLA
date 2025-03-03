@@ -1,7 +1,7 @@
 package RateLimiters
 
 import (
-	"TODO-LIST/Deserializers"
+	"GOLA/Deserializers"
 	"fmt"
 	"golang.org/x/time/rate"
 	"net/http"

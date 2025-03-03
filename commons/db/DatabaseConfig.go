@@ -1,4 +1,4 @@
-package commons
+package db
 
 type DBConfig struct {
 	Host     string

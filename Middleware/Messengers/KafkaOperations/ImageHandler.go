@@ -3,16 +3,25 @@ package KafkaOperations
 import (
 	"GOLA/ImageManagers/Metadata"
 	"GOLA/ImageManagers/RawStore"
+	"GOLA/constants"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
-	"os"
 )
+
+// Global managers initialized in main.
+var imageStoreManager RawStore.ImageStoreManager
+var imageMetadataManager Metadata.ImageMetadataManager
+
+// SetManagers is called from main after initialization to set the managers.
+func SetManagers(storeManager RawStore.ImageStoreManager, metadataManager Metadata.ImageMetadataManager) {
+	imageStoreManager = storeManager
+	imageMetadataManager = metadataManager
+}
 
 // ImageTask represents an image-related event.
 type ImageTask struct {
-	Action  string `json:"action"` // "upload" or "delete"
+	Action  string `json:"action"` // "upload", "delete", or "metadata"
 	ImageID string `json:"image_id"`
 	UserID  string `json:"user_id"`
 }
@@ -20,9 +29,9 @@ type ImageTask struct {
 // ImageHandler processes image-related HTTP requests.
 func ImageHandler(action string, w http.ResponseWriter, r *http.Request) {
 	switch action {
-	case "upload":
+	case constants.IMAGE_UPLOAD:
 		handleImageUpload(w, r)
-	case "delete":
+	case constants.IMAGE_DELETE:
 		handleImageDelete(w, r)
 	case "metadata":
 		handleImageMetadata(w, r)
@@ -46,53 +55,45 @@ func handleImageUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Read image data
+	// Read image data.
 	imageData, err := io.ReadAll(file)
 	if err != nil {
 		http.Error(w, "Failed to process image", http.StatusInternalServerError)
 		return
 	}
 
-	// Get storage type from environment variable
-	storageType := os.Getenv("IMAGE_STORAGE_TYPE") // Expected values: "minio", "s3", etc.
-	if storageType == "" {
-		http.Error(w, "Storage type not configured", http.StatusInternalServerError)
+	// Ensure the ImageStoreManager is initialized.
+	if imageStoreManager == nil {
+		http.Error(w, "Image store manager not initialized", http.StatusInternalServerError)
 		return
 	}
 
-	// Get ImageStoreManager based on storageType
-	imageManager, err := RawStore.GetImageStoreManager(storageType, nil, "images")
-	if err != nil {
-		log.Printf("Failed to get storage manager: %v", err)
-		http.Error(w, "Invalid storage type", http.StatusBadRequest)
-		return
-	}
-
-	// Upload to storage
-	err = imageManager.UploadImage(header.Filename, imageData)
+	// Upload the image.
+	err = imageStoreManager.UploadImage(header.Filename, imageData)
 	if err != nil {
 		http.Error(w, "Upload failed", http.StatusInternalServerError)
 		return
 	}
 
-	// Get Metadata Manager dynamically
-	metadataManager, err := Metadata.GetMetadataManager(storageType, nil, "images")
-	if err != nil {
-		log.Printf("Failed to get metadata manager: %v", err)
-		http.Error(w, "Metadata error", http.StatusInternalServerError)
+	// Ensure the ImageMetadataManager is initialized.
+	if imageMetadataManager == nil {
+		http.Error(w, "Metadata manager not initialized", http.StatusInternalServerError)
 		return
 	}
 
-	// Fetch Metadata
-	meta, err := metadataManager.GetImageMetadata(header.Filename)
+	// Retrieve metadata for the uploaded image.
+	meta, err := imageMetadataManager.GetImageMetadata(header.Filename)
 	if err != nil {
-		log.Printf("Failed to retrieve metadata: %v", err)
 		http.Error(w, "Metadata retrieval failed", http.StatusInternalServerError)
 		return
 	}
 
-	// Convert Metadata to JSON
-	jsonResponse, _ := json.Marshal(meta)
+	// Convert metadata to JSON and send response.
+	jsonResponse, err := json.Marshal(meta)
+	if err != nil {
+		http.Error(w, "JSON conversion failed", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
@@ -106,22 +107,14 @@ func handleImageDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get storage type from environment variable
-	storageType := os.Getenv("IMAGE_STORAGE_TYPE")
-	if storageType == "" {
-		http.Error(w, "Storage type not configured", http.StatusInternalServerError)
+	// Ensure the ImageStoreManager is initialized.
+	if imageStoreManager == nil {
+		http.Error(w, "Image store manager not initialized", http.StatusInternalServerError)
 		return
 	}
 
-	// Get ImageStoreManager based on storageType
-	imageManager, err := RawStore.GetImageStoreManager(storageType, nil, "images")
-	if err != nil {
-		http.Error(w, "Invalid storage type", http.StatusBadRequest)
-		return
-	}
-
-	// Delete the image
-	err = imageManager.DeleteImage(imageID)
+	// Delete the image.
+	err := imageStoreManager.DeleteImage(imageID)
 	if err != nil {
 		http.Error(w, "Failed to delete image", http.StatusInternalServerError)
 		return
@@ -139,29 +132,25 @@ func handleImageMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get storage type from environment variable
-	storageType := os.Getenv("IMAGE_STORAGE_TYPE")
-	if storageType == "" {
-		http.Error(w, "Storage type not configured", http.StatusInternalServerError)
+	// Ensure the ImageMetadataManager is initialized.
+	if imageMetadataManager == nil {
+		http.Error(w, "Metadata manager not initialized", http.StatusInternalServerError)
 		return
 	}
 
-	// Get Metadata Manager dynamically
-	metadataManager, err := Metadata.GetMetadataManager(storageType, nil, "images")
-	if err != nil {
-		http.Error(w, "Metadata error", http.StatusInternalServerError)
-		return
-	}
-
-	// Fetch Metadata
-	meta, err := metadataManager.GetImageMetadata(imageID)
+	// Retrieve metadata for the specified image.
+	meta, err := imageMetadataManager.GetImageMetadata(imageID)
 	if err != nil {
 		http.Error(w, "Failed to retrieve metadata", http.StatusInternalServerError)
 		return
 	}
 
-	// Convert Metadata to JSON
-	jsonResponse, _ := json.Marshal(meta)
+	// Convert metadata to JSON and send response.
+	jsonResponse, err := json.Marshal(meta)
+	if err != nil {
+		http.Error(w, "JSON conversion failed", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)

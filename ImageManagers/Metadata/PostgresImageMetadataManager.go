@@ -1,6 +1,7 @@
 package Metadata
 
 import (
+	dbCommons "GOLA/commons/db"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -12,9 +13,10 @@ type PostgresImageMetadataManager struct {
 	DB *sql.DB
 }
 
-// NewPostgresImageMetadataManager initializes a new PostgreSQL metadata manager.
-func NewPostgresImageMetadataManager(connStr string) (*PostgresImageMetadataManager, error) {
-	db, err := sql.Open("postgres", connStr)
+// NewPostgresImageMetadataManager initializes a new PostgreSQL metadata manager using the provided DBConfig.
+func NewPostgresImageMetadataManager(config dbCommons.DBConfig) (*PostgresImageMetadataManager, error) {
+	// Use the InitializeDB function for connection management.
+	db, err := dbCommons.InitializeDB(config)
 	if err != nil {
 		return nil, err
 	}

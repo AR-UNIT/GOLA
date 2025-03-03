@@ -1,5 +1,6 @@
 package constants
 
+// Task-related constants and messages.
 const (
 	ERROR_LOADING_TASKS         = "Error loading tasks"
 	ERROR_CREATING_TASK_MANAGER = "Error creating task manager"
@@ -12,7 +13,7 @@ const (
 	LIST_TASK     = "ListTask"
 )
 
-// Error Messages
+// Error Messages for tasks and general errors.
 const (
 	ErrorInvalidMethod          = "Invalid request method"
 	ErrorInvalidInput           = "Invalid input"
@@ -23,9 +24,24 @@ const (
 	ErrorTaskNotFound           = "Task not found"
 )
 
-// Success Messages
+// Success Messages for tasks.
 const (
 	SuccessTaskCompleted = "Task marked as complete"
 	SuccessTaskDeleted   = "Task successfully deleted"
 	SuccessTaskAdded     = "Task successfully added"
+)
+
+// Image Event constants.
+const (
+	IMAGE_UPLOAD       = "ImageUpload"
+	IMAGE_UPDATE       = "ImageUpdate"
+	IMAGE_DELETE       = "ImageDelete"
+	IMAGE_STATS_UPDATE = "ImageStatsUpdate"
+)
+
+// Error Messages for image events.
+const (
+	ErrorImageUpload      = "Error uploading image"
+	ErrorImageUpdate      = "Error updating image"
+	ErrorImageStatsUpdate = "Error updating image statistics"
 )
