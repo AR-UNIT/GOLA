@@ -13,3 +13,7 @@ Implemented using
  - CRON jobs for durable persistence of events/user interactions to PostgresDB
  - RateLimiting for API
  - elastic search for searching images via title/tags (WIP)
+
+
+### HIGH LEVEL SOFTWARE ARCHITECTURE DIAGRAM
+![high level design diagram](./high%20level%20design%20diagram.png)
